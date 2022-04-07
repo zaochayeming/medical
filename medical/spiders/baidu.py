@@ -7,5 +7,5 @@ class BaiduSpider(scrapy.Spider):
     start_urls = ['http://baike.baidu.com/item/急性阑尾炎']
 
     def parse(self, response):
-        print(response.status)
+        print(response.content)
         pass
