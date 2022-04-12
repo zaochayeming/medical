@@ -6,7 +6,23 @@ from scrapy.loader import ItemLoader
 class BaiduSpider(scrapy.Spider):
     name = 'baidu'
     allowed_domains = ['baidu.com']
-    start_urls = ['http://baike.baidu.com/item/急性阑尾炎']
+    start_urls = [
+                  'http://baike.baidu.com/item/急性阑尾炎',
+                  'http://baike.baidu.com/item/细菌性肺炎',
+                  'http://baike.baidu.com/item/慢性阻塞性肺疾病',
+                  'http://baike.baidu.com/item/肾衰竭/4427798#2',
+                  'http://baike.baidu.com/item/高血压/195863',
+                  'http://baike.baidu.com/item/腰椎间盘突出症/2996107',
+                  'http://baike.baidu.com/item/急性心肌梗死',
+                  'http://baike.baidu.com/item/急性白血病',
+                  'http://baike.baidu.com/item/充血性心力衰竭',
+                  'http://baike.baidu.com/item/消化道出血/1509#viewPageContent',
+                  'http://baike.baidu.com/item/结节性甲状腺肿',
+                  'http://baike.baidu.com/item/前列腺增生',
+                  'http://baike.baidu.com/item/急性胰腺炎',
+                  'http://baike.baidu.com/item/再生障碍性贫血',
+                  # 'http://baike.baidu.com/item/脑梗死',  # 内容太多
+                  ]
 
     def parse(self, response):
         print(response.status)
@@ -60,7 +76,7 @@ class BaiduSpider(scrapy.Spider):
                     detail_value_content = i.xpath('.//text()').extract()
                     detail_value += ''.join(detail_value_content)
                     detail_value += '\n'
-                print(detail_value_title)
+                # print(detail_value_title)
             print(detail_key)
             print(detail_value_xpath)
             item_l.add_value(detail_key, detail_value)
