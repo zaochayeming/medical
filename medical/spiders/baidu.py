@@ -2,6 +2,7 @@ import scrapy
 from scrapy import Item, Field
 from scrapy.loader import ItemLoader
 
+
 class BaiduSpider(scrapy.Spider):
     name = 'baidu'
     allowed_domains = ['baidu.com']
@@ -27,29 +28,75 @@ class BaiduSpider(scrapy.Spider):
         # 基本信息
         basic_key = response.xpath('//div[@class="basic-info J-basic-info cmn-clearfix"]/dl/dt/text()').extract()
         basic_value = response.xpath('//div[@class="basic-info J-basic-info cmn-clearfix"]/dl/dd/text()').extract()
-        basic_information = dict(zip(basic_key,basic_value))
-        for item in basic_information.items():
-            key = item[0]
-            value = item[1].replace('\n','')
-            print(key)
-            print(value)
-            # item.fields[key] = Field()
-            # item_l.add_value(key, value)
+        for i in range(len(basic_key)):
+            item.fields[basic_key[i]] = Field()
+            item_l.add_value(basic_key[i], basic_value[i].replace('\n', ''))
 
+        # 其他详细信息
+        detail_content = response.xpath(
+            '//div[@class="main_tab main_tab-defaultTab  curTab"]/div[@class="para-title level-2  J-chapter" or @class="para"]')  # 其他详情信息的xpath
+        index = []
+        for i in detail_content:
+            detail_key = i.xpath('./h2/text()').extract()  # 数组——详情信息内容标题
+            if len(detail_key) != 0:
+                x = detail_content.index(i)
+                index.append(x)
+        print(index)
+        for i in range(0, len(index)-1):
+            start_index = index[i]
+            end_index = index[i + 1]
+            detail_key = detail_content[start_index].xpath('./h2/text()').extract_first()
+            item.fields[detail_key] = Field()
 
-        # print(item_l.load_item())
+            detail_value = ''
+            detail_value_xpath = detail_content[start_index+1:end_index]
+            for i in detail_value_xpath:
+                tem = i.xpath('./b/text()').extract()
+                if len(tem) > 0:
+                    detail_value_title = i.xpath('./b//text()').extract()
+                    detail_value += ''.join(detail_value_title)
+                    detail_value += '\n'
+                else:
+                    detail_value_content = i.xpath('.//text()').extract()
+                    detail_value += ''.join(detail_value_content)
+                    detail_value += '\n'
+                print(detail_value_title)
+            print(detail_key)
+            print(detail_value_xpath)
+            item_l.add_value(detail_key, detail_value)
 
+            # print(i)
+            # print(k, v)
+            # value = detail_content[1:6]
+            # print(value)
 
-        # # 疾病英文名称
-        # english_name = response.xpath('//div[@class="dl-baseinfo"]/dl/dd/text()').extract()[0].replace('\n', '')
-        # # 就诊科室
-        # department = response.xpath('//div[@class="dl-baseinfo"]/dl/dd/text()').extract()[1].replace('\n', '')
-        # # 常见原因
-        # common_causes = response.xpath('//div[@class="dl-baseinfo"]/dl/dd/text()').extract()[2].replace('\n', '')
-        # # 常见症状
-        # common_symptom = response.xpath('//div[@class="dl-baseinfo"]/dl/dd/text()').extract()[2].replace('\n', '')
+        # item.fields[key] = Field()  # 将详情信息的标题放入key中
+
+        # print(len(detail_key))
+        # detail_value_title = i.xpath('./b//text()').extract()  # 详情信息内容加粗内容
+        # detail_value_text = i.xpath('./text()').extract()   # 详情信息内容未加粗的内容
+        # if len(detail_key) != 0:
+        #     key = detail_key[0]  # 字符串——详情信息内容标题
+        #     item.fields[key] = Field()  # 将详情信息的标题放入key中
+        #     print(key)
+
+        #     if len(detail_value) > 0:
+        #         item_l.add_value(key, detail_value)
+        #         detail_value = ''
+        # elif len(detail_value_title) > 0:
+        #     detail_value += ''.join(detail_value_title) + '\n'
+        #     # if len(detail_value_text) > 0:
+        #     #     detail_value += ''.join(detail_value_text)
+        #     print(detail_value)
         #
-        # title = response.xpath('//h2[@class="title-text"]/text()').extract()
-        # print(title)
+        # elif len(detail_value_text) > 0:
+        #     detail_value += ''.join(detail_value_text)
+        #
+        # else:
+        #     item_l.add_value(key, detail_value)
+        #     print('结束')
+        # print(detail_value_text)
+
+        print(item_l.load_item())
 
         return item_l.load_item()
