@@ -21,6 +21,22 @@ class BaiduSpider(scrapy.Spider):
                   'http://baike.baidu.com/item/前列腺增生',
                   'http://baike.baidu.com/item/急性胰腺炎',
                   'http://baike.baidu.com/item/再生障碍性贫血',
+                  'http://baike.baidu.com/item/急性上消化道出血',
+                  'http://baike.baidu.com/item/急性胆囊炎',
+                  'http://baike.baidu.com/item/肺结核',
+                  'http://baike.baidu.com/item/病毒性肝炎/344481',
+                  'http://baike.baidu.com/item/老年性白内障',
+                  'http://baike.baidu.com/item/甲状腺功能亢进症',
+                  'http://baike.baidu.com/item/心力衰竭/1373927',
+                  'http://baike.baidu.com/item/心房颤动',
+                  'http://baike.baidu.com/item/短暂性脑缺血发作',
+                  'http://baike.baidu.com/item/短暂性脑缺血发作',
+                  'http://baike.baidu.com/item/脑出血',
+                  'http://baike.baidu.com/item/脑膜瘤',
+                  'http://baike.baidu.com/item/神经胶质瘤',
+                  'http://baike.baidu.com/item/垂体腺瘤',
+                  'http://baike.baidu.com/item/支气管哮喘/661#viewPageContent',
+                  # 'http://baike.baidu.com/item/原发性肾病综合征',
                   # 'http://baike.baidu.com/item/脑梗死',  # 内容太多
                   ]
 
@@ -43,76 +59,66 @@ class BaiduSpider(scrapy.Spider):
 
         # 基本信息
         basic_key = response.xpath('//div[@class="basic-info J-basic-info cmn-clearfix"]/dl/dt/text()').extract()
-        basic_value = response.xpath('//div[@class="basic-info J-basic-info cmn-clearfix"]/dl/dd/text()').extract()
+        basic_value = response.xpath('//div[@class="basic-info J-basic-info cmn-clearfix"]/dl/dd//text()').extract()
+        basic_value = ''.join(basic_value).split('\n\n')
         for i in range(len(basic_key)):
-            item.fields[basic_key[i]] = Field()
-            item_l.add_value(basic_key[i], basic_value[i].replace('\n', ''))
+            key = basic_key[i].replace('所属科室', '就诊科室')
+            value = basic_value[i].replace('\n', '')
+            item.fields[key] = Field()
+            item_l.add_value(key, value)
 
         # 其他详细信息
         detail_content = response.xpath(
-            '//div[@class="main_tab main_tab-defaultTab  curTab"]/div[@class="para-title level-2  J-chapter" or @class="para"]')  # 其他详情信息的xpath
+            '//div[@class="content"]/div[1]/div[@class="para-title level-2  J-chapter" or @class="para" or @class="para-title level-3  "]')  # 其他详情信息的xpath
+        if len(detail_content) == 0:
+            detail_content = response.xpath(
+                '//div[@class="main_tab main_tab-defaultTab  curTab"]/div[@class="para-title level-2  J-chapter" or @class="para" or @class="para-title level-3  "]')  # 其他详情信息的xpath
         index = []
+        # print(detail_content)
         for i in detail_content:
+            # print(i, 1)
             detail_key = i.xpath('./h2/text()').extract()  # 数组——详情信息内容标题
             if len(detail_key) != 0:
                 x = detail_content.index(i)
                 index.append(x)
-        print(index)
+        # print(index)
         for i in range(0, len(index)-1):
             start_index = index[i]
             end_index = index[i + 1]
             detail_key = detail_content[start_index].xpath('./h2/text()').extract_first()
+            detail_key = detail_key.replace('疾病', '')\
+                                    .replace('常见', '')\
+                                    .replace('诊断及鉴别诊断', '诊断')\
+                                    .replace('实验室', '')\
+                                    .replace('临床分型及病理', '分类')\
+                                    .replace('病因及常见疾病', '病因')\
+                                    .replace('病理生理', '分类')\
+                                    .replace('发病原因', '病因')
+            # print(detail_key)
             item.fields[detail_key] = Field()
 
             detail_value = ''
             detail_value_xpath = detail_content[start_index+1:end_index]
             for i in detail_value_xpath:
+                h3 = i.xpath('./h3/text()').extract()
                 tem = i.xpath('./b/text()').extract()
                 if len(tem) > 0:
                     detail_value_title = i.xpath('./b//text()').extract()
                     detail_value += ''.join(detail_value_title)
+                    detail_value += '\n'
+                elif len(h3) > 0:
+                    detail_value += ''.join(h3)
                     detail_value += '\n'
                 else:
                     detail_value_content = i.xpath('.//text()').extract()
                     detail_value += ''.join(detail_value_content)
                     detail_value += '\n'
                 # print(detail_value_title)
-            print(detail_key)
-            print(detail_value_xpath)
+            # print(detail_key)
+            # print(detail_value_xpath)
             item_l.add_value(detail_key, detail_value)
 
-            # print(i)
-            # print(k, v)
-            # value = detail_content[1:6]
-            # print(value)
 
-        # item.fields[key] = Field()  # 将详情信息的标题放入key中
-
-        # print(len(detail_key))
-        # detail_value_title = i.xpath('./b//text()').extract()  # 详情信息内容加粗内容
-        # detail_value_text = i.xpath('./text()').extract()   # 详情信息内容未加粗的内容
-        # if len(detail_key) != 0:
-        #     key = detail_key[0]  # 字符串——详情信息内容标题
-        #     item.fields[key] = Field()  # 将详情信息的标题放入key中
-        #     print(key)
-
-        #     if len(detail_value) > 0:
-        #         item_l.add_value(key, detail_value)
-        #         detail_value = ''
-        # elif len(detail_value_title) > 0:
-        #     detail_value += ''.join(detail_value_title) + '\n'
-        #     # if len(detail_value_text) > 0:
-        #     #     detail_value += ''.join(detail_value_text)
-        #     print(detail_value)
-        #
-        # elif len(detail_value_text) > 0:
-        #     detail_value += ''.join(detail_value_text)
-        #
-        # else:
-        #     item_l.add_value(key, detail_value)
-        #     print('结束')
-        # print(detail_value_text)
-
-        print(item_l.load_item())
+        # print(item_l.load_item())
 
         return item_l.load_item()

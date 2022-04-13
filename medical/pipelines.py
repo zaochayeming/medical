@@ -11,6 +11,7 @@ from itemadapter import ItemAdapter
 class MedicalPipeline:
     def process_item(self, item, spider):
         for key, values in item.items():
-            # print(key, values)
-            values = values[0].replace(',', '，')
+            combine = '，'.join(values)
+            values = combine.replace(',', '，')
+            print(key, values)
         return item
